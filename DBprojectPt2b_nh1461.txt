@@ -1,0 +1,63 @@
+CREATE TABLE Person(
+Username VARCHAR(20) PRIMARY KEY,
+Password VARCHAR(20),
+fname VARCHAR(20),
+lname VARCHAR(20),
+BioMessage VARCHAR(50),
+);
+
+CREATE TABLE Photo(
+ID INT PRIMARY KEY;
+PostingDate DATETIME,
+FilePath VARCHAR(20),
+allFollowers INT,
+Caption VARCHAR(50),
+Username VARCHAR(20),
+FOREIGN KEY(Username) REFERECES Person(Username)
+);
+
+CREATE TABLE FriendGroup(
+GroupName VARCHAR(20),
+OwnedByUsername VARCHAR(20),
+BelongToUsername VARCHAR(20),
+Description VARCHAR(50),
+PRIMARY KEY(GroupName, OwnedByUsername, BelongToUsername),
+FOREIGN KEY(OwnedByUsername) REFERENCES Person(Username),
+FOREIGN KEY(BelongToUsername) REFERENCES Person(Username),
+);
+
+CREATE TABLE Follow(
+FirstUsername VARCHAR(20),
+SecondUsername VARCHAR(20),
+FollowStatus VARCHAR(20),
+PRIMARY KEY(FirstUsername, SecondUsername),
+FOREIGN KEY(FirstUsername) REFERENCES Person(Username),
+FOREIGN KEY(SecondUsername) REFERENCES Person(Username),
+);
+
+CREATE TABLE Like(
+Username VARCHAR(20),
+ID INT,
+LikeTime DATETIME,
+rating INT,
+PRIMARY KEY(Username, ID),
+FOREIGN KEY(Username) REFERENCES Person(Username),
+FOREIGN KEY(ID) REFERENCES Photo(ID),
+);
+
+CREATE TABLE Tagged(
+Username VARCHAR(20),
+ID INT,
+TagStatus VARCHAR(20),
+PRIMARY KEY(Username, ID),
+FOREIGN KEY(Username) REFERENCES Person(Username),
+FOREIGN KEY(ID) REFERENCES Photo(ID),
+);
+
+CREATE TABLE SharedWith(
+GroupName VARCHAR(20),
+ID INT,
+PRIMARY KEY(GroupName, ID),
+FOREIGN KEY(GroupName) REFERENCES FriendGroup(GroupName),
+FOREIGN KEY(ID) REFERENCES Photo(ID),
+);
