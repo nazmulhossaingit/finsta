@@ -8,7 +8,36 @@
             <ul>
                 <li><a href="/upload">Upload an Image</a></li>
                 <li><a href="/logout">Logout</a></li>
+                <li><a href="/follow">Send Follow Request</a></li>
+                <li><a href="/managerequests">Manage Requests</a></li>
+                <li><a href="/createFriendGroup">Create a Friend group</a></li>
             </ul>
+        
         </div>
+        {% if posts %}
+        <div>
+            {% for post in posts %}
+            <p>Posted by: {{post.firstName}} {{post.lastName}} - {{post.photoPoster}}</p>
+            <p>Posted on: {{post.postingdate}}</p>
+            <img src="static/images/{{post.filepath}}"> <br>
+                <p>{{post.caption}}</p>
+                <p>Tagged:
+                {% if post.tagged %}
+                    {% for tagee in post.tagged %}
+                        {% if loop.last %}
+                        <p> {{tagee.firstName}} {{tagee.lastName}} - {{tagee.username}} </p>
+                        {% else %}
+                        <p> {{tagee.firstName}} {{tagee.lastName}} - {{tagee.username}},</p>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                <p> None</p>
+                {% endif %}
+                </p>
+            {% endfor %}
+        </div>
+        {% else %}
+        <h2>Photos that are visible to you will be here</h2>
+        {% endif %}
     </body>
 </html>
