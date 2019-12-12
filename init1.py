@@ -14,7 +14,7 @@ SALT = 'cs3083'
 #Initialize the app from Flask
 app = Flask(__name__)
 
-IMAGES_DIR = os.path.join(os.getcwd(), "images")
+IMAGES_DIR = os.path.join(os.getcwd(), 'images')
 
 #Configure MySQL
 conn = pymysql.connect(host='localhost',
@@ -42,14 +42,14 @@ def hello():
 @app.route('/home')
 @login_required
 def home():
-    username = session["username"]
+    username = session['username']
     # get the users information
     cursor = conn.cursor()
     query = 'SELECT * FROM Person WHERE username = %s'
     cursor.execute(query, (username))
     data = cursor.fetchone()
-    firstName = data["firstName"]
-    lastName = data["lastName"]
+    firstName = data['firstName']
+    lastName = data['lastName']
     # get the photos visible to the username
     query = 'SELECT photoID,postingdate,filepath,caption,photoPoster FROM photo WHERE photoPoster = %s OR photoID IN (SELECT photoID FROM Photo WHERE photoPoster != %s AND allFollowers = 1 AND photoPoster IN (SELECT username_followed FROM follow WHERE username_follower = %s AND username_followed = photoPoster AND followstatus = 1)) OR photoID IN (SELECT photoID FROM sharedwith NATURAL JOIN belongto NATURAL JOIN photo WHERE member_username = %s AND photoPoster != %s) ORDER BY postingdate DESC'
     cursor.execute(query, (username, username, username, username, username))
@@ -66,7 +66,12 @@ def home():
         ownerInfo = cursor.fetchone()
         post['firstName'] = ownerInfo['firstName']
         post['lastName'] = ownerInfo['lastName']
-
+        query = "SELECT username,rating FROM likes WHERE photoID = %s"
+        cursor.execute(query, (post['photoID']))
+        result = cursor.fetchall()
+        if (result):
+            post['likers'] = result
+            
     cursor.close()
     return render_template('home.html', username=username, firstName=firstName, lastName =lastName, posts = data)
 
@@ -112,57 +117,54 @@ def loginAuth():
         error = 'Invalid login or username'
         return render_template('login.html', error=error)
 
-@app.route("/managerequests", methods=["GET","POST"])
+@app.route('/managerequests', methods=['GET','POST'])
 @login_required
 def managerequests():
     # get all the requests that have followstatus = 0 for the current user
     cursor = conn.cursor()
-    query = "SELECT username_follower FROM follow WHERE username_followed = %s AND followstatus = 0"
-    cursor.execute(query, (session["username"]))
+    query = 'SELECT username_follower FROM follow WHERE username_followed = %s AND followstatus = 0'
+    cursor.execute(query, (session['username']))
     data = cursor.fetchall()
     if request.form:
-        chosenUsers = request.form.getlist("chooseUsers")
+        chosenUsers = request.form.getlist('chooseUsers')
         for user in chosenUsers:
-            if request.form['action'] ==  "Accept":
-                query = "UPDATE follow SET followstatus = 1 WHERE username_followed=%s\
-                AND username_follower = %s"
+            if request.form['action'] ==  'Accept':
+                query = 'UPDATE follow SET followstatus = 1 WHERE username_followed=%s AND username_follower = %s'
                 cursor.execute(query, (session['username'], user))
                 conn.commit()
-                flash("The selected friend requests have been accepted!")
-            elif request.form['action'] == "Decline":
-                query = "DELETE FROM follow WHERE username_followed = %s\
-                AND username_follower = %s"
+                flash('The selected friend requests have been accepted!')
+            elif request.form['action'] == 'Decline':
+                query = 'DELETE FROM follow WHERE username_followed = %s AND username_follower = %s'
                 cursor.execute(query, (session['username'], user))
                 conn.commit()
-                flash("The selected friend requests have been deleted")
-        return redirect(url_for("managerequests"))
+                flash('The selected friend requests have been deleted')
+        return redirect(url_for('managerequests'))
         # handle form goes here
     cursor.close()
-    return render_template("managerequests.html", followers = data)
+    return render_template('managerequests.html', followers = data)
     
-@app.route("/createFriendGroup", methods=["GET", "POST"])
+@app.route('/createFriendGroup', methods=['GET', 'POST'])
 @login_required
 def createFriendGroup():
     if request.form:
-        groupName = request.form["groupName"]
-        description = request.form["description"]
+        groupName = request.form['groupName']
+        description = request.form['description']
         cursor = conn.cursor()
         # check to make sure the group Name doesn't already exist for the user
-        query = "SELECT * FROM friendGroup WHERE groupOwner = %s\
-        AND groupName = %s"
-        cursor.execute(query, (session["username"], groupName))
+        query = 'SELECT * FROM friendGroup WHERE groupOwner = %s AND groupName = %s'
+        cursor.execute(query, (session['username'], groupName))
         data = cursor.fetchone()
         if data: # bad, return error message
-            error = f"You already have a friend group called {groupName}"
-            return render_template("createFriendGroup.html", message = error)
+            error = f'You already have a friend group called {groupName}'
+            return render_template('createFriendGroup.html', message = error)
         else: # good, add group into database
-            query = "INSERT INTO friendGroup VALUES(%s,%s,%s)"
+            query = 'INSERT INTO friendGroup VALUES(%s,%s,%s)'
             cursor.execute(query, (session['username'], groupName, description))
             conn.commit()
-            flash(f"Successfully created the {groupName} friend group")
-            return redirect(url_for("createFriendGroup"))
+            flash(f'Successfully created the {groupName} friend group')
+            return redirect(url_for('createFriendGroup'))
 
-    return render_template("createFriendGroup.html")
+    return render_template('createFriendGroup.html')
 
 @app.route('/follow', methods=['GET', 'POST'])
 @login_required
@@ -276,10 +278,10 @@ def upload_image():
         cursor.close()
         if (allFollowers):
             message = 'Image has been successfully uploaded and shared with all of your followers.'
-            return render_template("upload.html", message=message, groups = userGroups)
+            return render_template('upload.html', message=message, groups = userGroups)
         else:
             cursor = conn.cursor()
-            groups = request.form.getlist("groups")
+            groups = request.form.getlist('groups')
             for group in groups:
                 ins = 'INSERT INTO sharedwith(groupOwner, groupName, photoID) VALUES (%s, %s, LAST_INSERT_ID())'
                 cursor.execute(ins, (username, group))
@@ -313,7 +315,7 @@ def upload_image():
 #    cursor.close()
 #    return render_template('select_blogger.html', user_list=data)
 #
-#@app.route('/show_posts', methods=["GET", "POST"])
+#@app.route('/show_posts', methods=['GET', 'POST'])
 #def show_posts():
 #    poster = request.args['poster']
 #    cursor = conn.cursor();
@@ -333,7 +335,7 @@ app.secret_key = 'some key that you will never guess'
 #debug = True -> you don't have to restart flask
 #for changes to go through, TURN OFF FOR PRODUCTION
 if __name__ == '__main__':
-    if not os.path.isdir("images"):
+    if not os.path.isdir('images'):
         os.mkdir(IMAGES_DIR)
     
     app.run('127.0.0.1', 5000, debug = True)
